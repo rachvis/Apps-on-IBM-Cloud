@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ app_name }} · IBM Cloud Tutorial Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <main class="container">
+      <header class="hero card">
+        <img src="{{ url_for('static', filename='mascot.svg') }}" alt="Cute cloud mascot" class="mascot" />
+        <div>
+          <p class="eyebrow">IBM Cloud · Feature Flags Demo</p>
+          <h1>{{ app_name }}</h1>
+          <p>
+            Tiny, witty, and deploy-ready. Toggle <code>show_vibe</code> and <code>show_roast</code>
+            to reveal API sections in real time.
+          </p>
+        </div>
+      </header>
+
+      <section class="grid">
+        {% if show_vibe %}
+        <article class="card vibe">
+          <h2>✨ Vibe API</h2>
+          <p class="message">{{ vibe_message }}</p>
+          <p class="endpoint">Endpoint: <code>/api/vibe</code></p>
+          <a class="btn" href="/api/vibe" target="_blank">Call API</a>
+        </article>
+        {% else %}
+        <article class="card muted">
+          <h2>✨ Vibe API</h2>
+          <p>This section is hidden. Enable the <code>show_vibe</code> feature flag.</p>
+        </article>
+        {% endif %}
+
+        {% if show_roast %}
+        <article class="card roast">
+          <h2>🔥 Roast API</h2>
+          <p class="message">{{ roast_message }}</p>
+          <p class="endpoint">Endpoint: <code>/api/roast</code></p>
+          <a class="btn" href="/api/roast" target="_blank">Call API</a>
+        </article>
+        {% else %}
+        <article class="card muted">
+          <h2>🔥 Roast API</h2>
+          <p>This section is hidden. Enable the <code>show_roast</code> feature flag.</p>
+        </article>
+        {% endif %}
+      </section>
+
+      <footer>
+        <p>Refresh the page to get a fresh vibe/roast from a list of 10 messages each.</p>
+      </footer>
+    </main>
+  </body>
+</html>

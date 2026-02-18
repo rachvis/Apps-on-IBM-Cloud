@@ -1,0 +1,134 @@
+:root {
+  --bg: #0a0c1a;
+  --card: #141933cc;
+  --text: #f6f7ff;
+  --muted: #b8bde0;
+  --vibe: #5eead4;
+  --roast: #fb7185;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  background: radial-gradient(circle at 20% 10%, #2a327a 0%, var(--bg) 45%), var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.container {
+  width: min(1050px, 92vw);
+  margin: 2rem auto 3rem;
+  position: relative;
+  z-index: 1;
+}
+
+.card {
+  border: 1px solid #ffffff2b;
+  background: var(--card);
+  backdrop-filter: blur(8px);
+  border-radius: 20px;
+  padding: 1.2rem 1.4rem;
+  box-shadow: 0 12px 40px #0000003a;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 1rem;
+  align-items: center;
+}
+
+.mascot {
+  width: 105px;
+  filter: drop-shadow(0 8px 20px #76e4ff66);
+}
+
+.eyebrow {
+  color: #93c5fd;
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+h1,
+h2 {
+  margin: 0.4rem 0;
+}
+
+.grid {
+  margin-top: 1.2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.message {
+  font-size: 1.07rem;
+  min-height: 66px;
+}
+
+.endpoint {
+  color: var(--muted);
+}
+
+.btn {
+  display: inline-block;
+  text-decoration: none;
+  padding: 0.55rem 0.95rem;
+  border-radius: 10px;
+  color: #0b1024;
+  background: linear-gradient(135deg, #a5b4fc, #67e8f9);
+  font-weight: 700;
+}
+
+.vibe {
+  border-color: #5eead466;
+}
+
+.roast {
+  border-color: #fb718566;
+}
+
+.muted {
+  opacity: 0.85;
+}
+
+.bg-orb {
+  position: fixed;
+  border-radius: 999px;
+  filter: blur(55px);
+  z-index: 0;
+}
+
+.orb-1 {
+  width: 250px;
+  height: 250px;
+  background: #4f46e5cc;
+  top: -80px;
+  right: -55px;
+}
+
+.orb-2 {
+  width: 220px;
+  height: 220px;
+  background: #fb718599;
+  bottom: -80px;
+  left: -55px;
+}
+
+footer {
+  color: var(--muted);
+  text-align: center;
+  margin-top: 1rem;
+}
+
+code {
+  color: #bfdbfe;
+}

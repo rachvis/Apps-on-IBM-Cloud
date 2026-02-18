@@ -1,6 +1,6 @@
 # Building, deploying, and testing apps on IBM Cloud (with watsonx Code Assistant, Code Engine, and Feature Flags)
 
-> **Tutorial goal:** Build a tiny Gen Z-friendly app, deploy it to **IBM Cloud Code Engine**, and test it with **two feature flags** using **IBM Cloud App Configuration (Feature Flags)**.
+> **Tutorial goal:** Build an app, deploy it to **IBM Cloud Code Engine**, and test it with **two feature flags** using **IBM Cloud App Configuration (Feature Flags)**.
 
 ## What you'll build
 

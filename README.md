@@ -1,33 +1,71 @@
-# Building, deploying, and testing apps on IBM Cloud
+# Building, deploying, and testing apps on IBM Cloud (with watsonx Code Assistant, Code Engine, and Feature Flags)
 
-A developer.ibm.com-style tutorial to build a tiny, funny Gen Z app with:
+> **Tutorial goal:** Build a tiny Gen Z-friendly app, deploy it to **IBM Cloud Code Engine**, and test it with **two feature flags** using **IBM Cloud App Configuration (Feature Flags)**.
 
-- **watsonx Code Assistant** for faster coding
-- **IBM Cloud Code Engine** for deployment
-- **IBM Cloud App Configuration feature flags** for controlled testing
+## What you'll build
 
-App name: **Vibe & Roast Studio**
+You will create and deploy a tiny Flask app called **Vibe Check API**:
 
-- `/api/vibe` returns a random vibe line from a set of 10.
-- `/api/roast` returns a random roast line from a set of 10.
-- `/` shows a pretty UI with cards that are conditionally visible by feature flags.
+- `GET /` → app status
+- `GET /vibe` → returns a witty message
+- `GET /roast` → returns a playful roast (**feature-flagged**)
 
-## Step 1 — Set up IBM Cloud service instances
+Two feature flags control behavior:
 
-### 1.1 Log in and set region/resource group
+1. `enable_daily_roast` – enables/disables the `/roast` endpoint.
+2. `enable_chaos_mode` – makes `/vibe` extra chaotic and random.
+
+You will also use **watsonx Code Assistant** to speed up coding, tests, and refactoring.
+
+---
+
+## Architecture
+
+- **watsonx Code Assistant**: helps generate/modernize code, add tests, and improve docs.
+- **IBM Cloud App Configuration**: hosts feature flags.
+- **Flask app**: fetches flags and changes runtime behavior.
+- **IBM Cloud Code Engine**: container build + deployment + routing.
+
+---
+
+## Prerequisites
+
+- IBM Cloud account with access to:
+  - watsonx Code Assistant
+  - Code Engine
+  - App Configuration (Feature Flags)
+- Local tools:
+  - [IBM Cloud CLI](https://cloud.ibm.com/docs/cli)
+  - Docker (optional for local container build)
+  - Python 3.11+
+  - Git
+
+---
+
+## Step 1: Set up IBM Cloud service instances
+
+### 1.1 Log in and target your account
 
 ```bash
 ibmcloud login --sso
 ibmcloud target -r us-south
-ibmcloud resource group-create rg-vibe-roast
-ibmcloud target -g rg-vibe-roast
 ```
 
-### 1.2 Provision watsonx Code Assistant
+> Use your preferred region if different.
 
-Create or verify a watsonx Code Assistant instance in IBM Cloud catalog.
+### 1.2 Create a resource group (optional but recommended)
 
-### 1.3 Provision App Configuration and create flags
+```bash
+ibmcloud resource group-create rg-vibe-tutorial
+ibmcloud target -g rg-vibe-tutorial
+```
+
+### 1.3 Create (or verify) service instances
+
+#### watsonx Code Assistant
+Create it from the IBM Cloud catalog in the console if your account does not already have one.
+
+#### App Configuration (Feature Flags)
 
 ```bash
 ibmcloud resource service-instance-create vibe-appconfig app-configuration lite us-south
@@ -35,20 +73,20 @@ ibmcloud resource service-key-create vibe-appconfig-key Manager --instance-name 
 ibmcloud resource service-key vibe-appconfig-key
 ```
 
-From service key JSON, copy:
+Capture these values from the credentials JSON:
 
-- `guid`
-- `apprapp_url`
+- `guid` (App Configuration GUID)
+- `apprapp_url` or endpoint URL (region-dependent)
 - `apikey`
 
-In App Configuration UI:
+Then in App Configuration dashboard:
 
-1. Create environment `dev`
-2. Create two Boolean flags:
-   - `show_vibe`
-   - `show_roast`
+1. Create an environment (for example: `dev`).
+2. Create two feature flags:
+   - `enable_daily_roast` (default: `false`)
+   - `enable_chaos_mode` (default: `false`)
 
-### 1.4 Create Code Engine project
+#### Code Engine project
 
 ```bash
 ibmcloud plugin install code-engine -f
@@ -56,35 +94,43 @@ ibmcloud ce project create --name vibe-ce-project
 ibmcloud ce project select --name vibe-ce-project
 ```
 
-## Step 2 — Download code and configure credentials
+---
 
-### 2.1 Clone repo
+## Step 2: Download code and configure credentials
+
+### 2.1 Clone this repository
 
 ```bash
 git clone <your-repo-url>
 cd Apps-on-IBM-Cloud
 ```
 
-### 2.2 Configure environment
+### 2.2 Create local environment file
 
 ```bash
 cp .env.example .env
 ```
 
-Set values in `.env`:
+Update `.env`:
 
 ```dotenv
 PORT=8080
 APP_NAME=VibeCheckAPI
+
+# App Configuration credentials
 APP_CONFIG_URL=<your_app_config_endpoint>
 APP_CONFIG_GUID=<your_app_config_guid>
 APP_CONFIG_APIKEY=<your_iam_apikey>
 APP_CONFIG_ENVIRONMENT_ID=<your_environment_id>
-FLAG_SHOW_VIBE=true
-FLAG_SHOW_ROAST=false
+
+# Fallback local flags (used if remote fetch fails)
+FLAG_ENABLE_DAILY_ROAST=false
+FLAG_ENABLE_CHAOS_MODE=false
 ```
 
-### 2.3 Local run
+> Tip: You can get `APP_CONFIG_ENVIRONMENT_ID` from the App Configuration environment settings.
+
+### 2.3 Run locally
 
 ```bash
 python -m venv .venv
@@ -93,26 +139,37 @@ pip install -r requirements.txt
 python app.py
 ```
 
-Open:
+Test endpoints:
 
-- UI: `http://localhost:8080/`
-- APIs: `http://localhost:8080/api/vibe`, `http://localhost:8080/api/roast`
+```bash
+curl http://localhost:8080/
+curl http://localhost:8080/vibe
+curl http://localhost:8080/roast
+```
 
-### 2.4 Use watsonx Code Assistant while building
+If `enable_daily_roast` is `false`, `/roast` returns 404 with a feature-disabled message.
 
-Prompt examples:
+### 2.4 Use watsonx Code Assistant during development
 
-- “Generate tests for Flask endpoints with feature-flag scenarios.”
-- “Refactor message selection for readability without changing API contract.”
-- “Improve HTML/CSS accessibility and responsiveness for this UI.”
+In VS Code or JetBrains with the watsonx extension enabled, try prompts like:
 
-## Step 3 — End-to-end flow execution and demo
+- “Generate pytest tests for `feature_flags.py`, including fallback behavior when API fails.”
+- “Refactor `app.py` to improve endpoint readability but keep API behavior unchanged.”
+- “Add docstrings and type hints to all functions.”
 
-### 3.1 Deploy on Code Engine
+This is where watsonx Code Assistant accelerates your build phase.
+
+---
+
+## Step 3: End-to-end execution, deployment, and demo
+
+### 3.1 Deploy to Code Engine from source
+
+From repo root:
 
 ```bash
 ibmcloud ce application create \
-  --name vibe-roast-studio \
+  --name vibe-check-api \
   --build-source . \
   --port 8080 \
   --cpu 0.25 \
@@ -120,47 +177,98 @@ ibmcloud ce application create \
   --env-from-file .env
 ```
 
-Get URL:
+Get app URL:
 
 ```bash
-ibmcloud ce application get --name vibe-roast-studio
+ibmcloud ce application get --name vibe-check-api
 ```
 
-### 3.2 Demo: feature flags drive UI visibility
+Copy the URL output (for example `https://vibe-check-api.<hash>.us-south.codeengine.appdomain.cloud`).
 
-Set app URL:
+### 3.2 Demo flow: test flags live
+
+Assume:
 
 ```bash
-export APP_URL=https://<your-ce-url>
+export APP_URL=https://<your-ce-app-url>
 ```
 
-#### Case A: `show_vibe=true`, `show_roast=false`
-
-- UI should display Vibe card.
-- UI should hide Roast card.
-- `/api/roast` returns a friendly “flag is off” message (not 404).
+#### Baseline (both flags false)
 
 ```bash
-curl "$APP_URL/api/vibe"
-curl "$APP_URL/api/roast"
+curl "$APP_URL/vibe"
+curl -i "$APP_URL/roast"
 ```
 
-#### Case B: `show_vibe=true`, `show_roast=true`
+Expected:
 
-Enable both flags in App Configuration, then refresh UI.
+- `/vibe` returns normal witty response.
+- `/roast` is disabled (404).
 
-- Both cards become visible.
-- Every refresh shows a different random line for vibe/roast from lists of 10 messages each.
+#### Toggle `enable_daily_roast=true`
+
+In App Configuration UI:
+
+1. Open `enable_daily_roast`
+2. Enable for `dev`
+3. Save/publish changes
+
+Re-test:
 
 ```bash
-for i in {1..5}; do curl "$APP_URL/api/vibe"; echo; done
-for i in {1..5}; do curl "$APP_URL/api/roast"; echo; done
+curl "$APP_URL/roast"
 ```
+
+Expected: roast endpoint now returns a playful roast message.
+
+#### Toggle `enable_chaos_mode=true`
+
+In App Configuration UI:
+
+1. Open `enable_chaos_mode`
+2. Enable for `dev`
+3. Save/publish changes
+
+Re-test multiple times:
+
+```bash
+for i in {1..5}; do curl "$APP_URL/vibe"; echo; done
+```
+
+Expected: increasingly chaotic/funny responses.
+
+---
 
 ## Cleanup
 
 ```bash
-ibmcloud ce application delete --name vibe-roast-studio -f
+ibmcloud ce application delete --name vibe-check-api -f
 ibmcloud ce project delete --name vibe-ce-project -f
 ibmcloud resource service-instance-delete vibe-appconfig -f
 ```
+
+---
+
+## Troubleshooting
+
+- **App always uses fallback flags**
+  - Verify `APP_CONFIG_URL`, `APP_CONFIG_GUID`, `APP_CONFIG_APIKEY`, and `APP_CONFIG_ENVIRONMENT_ID`.
+  - Check app logs in Code Engine:
+    ```bash
+    ibmcloud ce application logs --name vibe-check-api --follow
+    ```
+- **`/roast` still disabled after enabling flag**
+  - Wait for config propagation and retry.
+  - Confirm correct environment in App Configuration.
+- **Build fails on Code Engine**
+  - Ensure `requirements.txt` and `Dockerfile` are in repo root.
+
+---
+
+## Why this pattern works
+
+- **Fast build loop** with watsonx Code Assistant.
+- **Safe progressive delivery** with feature flags.
+- **Simple serverless deployment** via Code Engine.
+
+Your app ships faster, with less chaos in production (unless you intentionally turn on `enable_chaos_mode`, then chaos is the product 😉).

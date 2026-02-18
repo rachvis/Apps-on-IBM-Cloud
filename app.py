@@ -1,6 +1,5 @@
 import os
-import random
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify
 from dotenv import load_dotenv
 
 from feature_flags import FeatureFlagClient
@@ -15,77 +14,57 @@ flags = FeatureFlagClient(
     environment_id=os.getenv("APP_CONFIG_ENVIRONMENT_ID", ""),
 )
 
-VIBE_MESSAGES = [
-    "You are serving pixel-perfect main character energy today.",
-    "Build deployed. Skin clear. Inbox ignored. Big win.",
-    "Your PR is so clean it needs a ring light.",
-    "You debug like a detective in a cyberpunk hoodie.",
-    "Today’s vibe: shipping features before coffee gets cold.",
-    "No cap, your stack is stacked.",
-    "Your code has rizz and lint-free charisma.",
-    "You’re in your dev era and it’s iconic.",
-    "The sprint feared you, and rightly so.",
-    "You just turned chaos into architecture. Respect.",
-]
-
-ROAST_MESSAGES = [
-    "Your TODO list is a historical document now.",
-    "You said ‘quick fix’ and started a trilogy.",
-    "Your code runs on vibes and unexplained miracles.",
-    "You renamed `final_v2_latest_REAL.py` again, huh?",
-    "That bug saw your commit and chose violence.",
-    "Your staging environment is basically fan fiction.",
-    "You wrote one line and opened seven tabs. Cinematic.",
-    "Your rollback strategy is ‘manifesting’.",
-    "Your keyboard deserves hazard pay.",
-    "You deploy on Friday like it’s a personality trait.",
-]
-
-
-
-def is_flag_on(flag_key: str, fallback_env: str) -> bool:
-    fallback = os.getenv(fallback_env, "false").lower() == "true"
-    return flags.is_enabled(flag_key, fallback=fallback)
-
 
 @app.get("/")
 def home():
-    show_vibe = is_flag_on("show_vibe", "FLAG_SHOW_VIBE")
-    show_roast = is_flag_on("show_roast", "FLAG_SHOW_ROAST")
-
-    return render_template(
-        "index.html",
-        app_name=os.getenv("APP_NAME", "VibeCheckAPI"),
-        show_vibe=show_vibe,
-        show_roast=show_roast,
-        vibe_message=random.choice(VIBE_MESSAGES),
-        roast_message=random.choice(ROAST_MESSAGES),
+    return jsonify(
+        {
+            "app": os.getenv("APP_NAME", "VibeCheckAPI"),
+            "status": "slaying",
+            "message": "No cap, the API is up.",
+        }
     )
 
 
-@app.get("/health")
-def health():
-    return jsonify({"status": "ok", "app": os.getenv("APP_NAME", "VibeCheckAPI")})
-
-
 @app.get("/vibe")
-@app.get("/api/vibe")
 def vibe():
-    return jsonify({"api": "vibe", "message": random.choice(VIBE_MESSAGES)})
+    chaos_mode = flags.is_enabled(
+        "enable_chaos_mode",
+        fallback=(os.getenv("FLAG_ENABLE_CHAOS_MODE", "false").lower() == "true"),
+    )
 
-
-@app.get("/roast")
-@app.get("/api/roast")
-def roast():
-    if not is_flag_on("show_roast", "FLAG_SHOW_ROAST"):
+    if chaos_mode:
         return jsonify(
             {
-                "api": "roast",
-                "message": "Roast mode is currently napping. Flip the show_roast flag to wake it up.",
+                "vibe": "CHAOS",
+                "message": "Main character energy unlocked. Your to-do list is now a side quest.",
             }
         )
 
-    return jsonify({"api": "roast", "message": random.choice(ROAST_MESSAGES)})
+    return jsonify(
+        {
+            "vibe": "CHILL",
+            "message": "Hydrate, commit, and pretend that bug was a feature.",
+        }
+    )
+
+
+@app.get("/roast")
+def roast():
+    roast_enabled = flags.is_enabled(
+        "enable_daily_roast",
+        fallback=(os.getenv("FLAG_ENABLE_DAILY_ROAST", "false").lower() == "true"),
+    )
+
+    if not roast_enabled:
+        return jsonify({"error": "Feature disabled. Roast not available."}), 404
+
+    return jsonify(
+        {
+            "roast": "You said 'it works on my machine' like your laptop is a production environment.",
+            "emoji_support": "💀",
+        }
+    )
 
 
 if __name__ == "__main__":

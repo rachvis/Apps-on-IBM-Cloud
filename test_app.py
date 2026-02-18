@@ -1,16 +1,15 @@
 import app as vibe_app
 
 
-def test_health_endpoint():
+def test_home_endpoint():
     client = vibe_app.app.test_client()
-    res = client.get("/health")
+    res = client.get("/")
     assert res.status_code == 200
-    assert res.get_json()["status"] == "ok"
+    assert res.get_json()["status"] == "slaying"
 
 
-def test_roast_returns_message_when_disabled(monkeypatch):
-    monkeypatch.setenv("FLAG_SHOW_ROAST", "false")
+def test_roast_disabled_by_default(monkeypatch):
+    monkeypatch.setenv("FLAG_ENABLE_DAILY_ROAST", "false")
     client = vibe_app.app.test_client()
-    res = client.get("/api/roast")
-    assert res.status_code == 200
-    assert "napping" in res.get_json()["message"]
+    res = client.get("/roast")
+    assert res.status_code == 404
